@@ -1,0 +1,264 @@
+<html>
+    <head>
+        <style>
+            body{
+                margin: 0;
+                padding: 0;
+                
+                /* From https://stackoverflow.com/questions/826782/how-to-disable-text-selection-highlighting-using-css */
+                -webkit-touch-callout: none; /* iOS Safari */
+                  -webkit-user-select: none; /* Chrome/Safari/Opera */
+                   -khtml-user-select: none; /* Konqueror */
+                     -moz-user-select: none; /* Firefox */
+                      -ms-user-select: none; /* Internet Explorer/Edge */
+                          user-select: none; /* Non-prefixed version, currently not supported by any browser */
+
+            }
+            canvas {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <!--h1>Titulo</h1>
+        <p>Hola</p-->
+
+        <script>
+
+            class WorldObject {
+
+                constructor(x,y,w, h, speedX = 1, speedY = 1){
+                    this.x = x;
+                    this.y = y;
+                    this.width = w;
+                    this.height = h;
+                    this.speedY = speedY;
+                    this.speedX = speedX;
+
+                }
+            }
+
+            class KeyBoard {
+
+                constructor(){
+
+                    this.keys = {};
+                    document.addEventListener("keydown", (e) => {
+
+                        this.keys[e.key] = true;
+                    });
+
+                    document.addEventListener("keyup", (e)=> {
+                        this.keys[e.key] = false;
+                    });
+                }
+
+                isPressed(key){
+
+                    return this.keys[key] && true;
+                }
+            }
+
+            KeyBoard.KEYS = {
+                    
+                A: 'a',
+                W: 'w',
+                D: 'd',
+                S: 's',
+                SPACE: " ",
+                SHIFT: "Shift",
+                UP: "ArrowUp",
+                DOWN: "ArrowDown",
+                LEFT: "ArrowLeft",
+                RIGHT: "ArrowRight"
+
+            };
+
+            let gameClient = {
+
+                canvas: null,
+                ctx: null,
+                me: new WorldObject(-25,-25, 50, 50, 10, 10),
+                keyboard: new KeyBoard(),
+                objects: [],
+
+                functions : {
+
+                    spawnObject: function(){
+
+                        let gc = gameClient;
+
+                        let rx = Math.random() * 1000 * (Math.random() > 0.5 ? 1 : -1);
+                        let ry = Math.random() * 1000 * (Math.random() > 0.5 ? 1 : -1);
+
+                        gc.objects.push(new WorldObject(rx, ry, 40, 40));
+                    },
+
+                    drawObject: function(o){
+
+                        let c = gameClient.ctx;
+                        c.fillStyle = "red";
+                        c.fillRect(o.x, o.y, o.width, o.height);
+                    },
+
+                    drawMe: function(){
+                        
+                        let c = gameClient.ctx;
+                        let me = gameClient.me;
+                        c.fillStyle = "blue";
+                        c.fillRect(me.x, me.y, me.width, me.height);
+
+                    },
+
+                    moveMe: function(){
+
+                        let keyboard = gameClient.keyboard;
+                        let me = gameClient.me;
+                        let c = gameClient.ctx;
+
+                        if(keyboard.isPressed(KeyBoard.KEYS.UP)){
+
+                            me.y -= me.speedY;
+
+                        }
+
+                        if(keyboard.isPressed(KeyBoard.KEYS.DOWN)){
+
+                            me.y += me.speedY;
+
+                        }
+
+                        if(keyboard.isPressed(KeyBoard.KEYS.LEFT)){
+
+                            me.x -= me.speedX;
+
+                        }
+
+                        if(keyboard.isPressed(KeyBoard.KEYS.RIGHT)){
+
+                            me.x += me.speedX;
+
+                        }
+                    },
+                    
+                    drawCoordLines: function(){
+
+                        let c = gameClient.ctx;
+                        let MAX = 3000;
+                        let STEPS = 20;
+
+                        c.moveTo(-MAX, 0);
+                        c.lineTo(MAX, 0);
+                        c.strokeStyle = "black";
+                        c.stroke();
+
+                        c.moveTo(0, -MAX);
+                        c.lineTo(0, MAX);
+                        c.stroke();
+                        
+                        let gap = MAX/STEPS;
+
+                        c.fillStyle = "black";
+
+                        for(let i = -MAX; i < MAX; i += gap){
+
+                            c.beginPath();
+                            c.moveTo(i, -10);
+                            c.lineTo(i, 10);
+                            c.stroke();
+                            c.closePath();
+                            c.fillText(i,i,15);
+                        
+                        }
+
+                        for(let i = -MAX; i < MAX; i += gap){
+
+                            c.beginPath();
+                            c.moveTo(-10, i);
+                            c.lineTo(10, i);
+                            c.stroke();
+                            c.closePath();
+                            c.fillText(i,5,i);
+                        }
+                    },
+
+                    render: function(){
+
+                        let $self = gameClient.functions;
+                        let canvas = gameClient.canvas;
+                        let me = gameClient.me;
+                        let objects = gameClient.objects;
+                        requestAnimationFrame($self.render);
+
+                        // clear canvas
+                        $self.clearScreen();
+                        gameClient.ctx.save();
+
+                        // center camera to player
+                        gameClient.ctx.translate(canvas.width / 2 - me.x , canvas.height/2 - me.y);
+
+                        // player logic
+                        $self.moveMe();
+
+                        // player render
+                        $self.drawMe();
+
+                        // objects logic
+
+                        // objects render
+                        objects.forEach(function(o,i){
+
+                            $self.drawObject(o);
+                        });
+
+                        // world render
+                        $self.drawCoordLines();
+                        gameClient.ctx.restore();
+                    },
+
+                    clearScreen: function(){
+
+                        let c = gameClient.ctx;
+                        let canvas = gameClient.canvas;
+                        
+                        c.fillStyle = "white";
+                        c.fillRect(0,0, canvas.width, canvas.height);
+                    },
+
+                    loop: function(){
+
+                        requestAnimationFrame(this.render);
+                    },
+                    init: function(){
+
+                        gameClient.canvas = document.createElement("canvas");
+                        gameClient.ctx = gameClient.canvas.getContext("2d");
+                        document.body.appendChild(gameClient.canvas);
+
+                        gameClient.canvas.width = window.innerWidth;
+                        gameClient.canvas.height = window.innerHeight;
+
+                        for(let i = 0; i < 100; ++i){
+                            gameClient.functions.spawnObject();
+                        }
+
+                        this.loop();
+                    }
+                },
+
+                init: function(){
+
+                    this.functions.init();
+                }
+            };
+            let $gc = gameClient;
+
+            // const canvas = document.getElementById("myCanvas");
+
+            $gc.init();
+
+
+        </script>
+    </body>
+</html>
