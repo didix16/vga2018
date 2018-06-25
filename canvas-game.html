@@ -1,0 +1,288 @@
+<html>
+    <head>
+        <style>
+            body{
+                margin: 0;
+                padding: 0;
+            }
+            canvas {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <!--h1>Titulo</h1>
+        <p>Hola</p-->
+
+        <script>
+
+            // const canvas = document.getElementById("myCanvas");
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            document.body.appendChild(canvas);
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // while ...
+
+            // switch ...
+
+            let x = 0;
+            let y = 0;
+            let isMouseDown = false;
+            const speed = 10;
+
+            const me = {
+                x: 0,
+                y: 0,
+                vx: 10,
+                vy: 10,
+                width: 100,
+                height: 100,
+                color: {
+                    r: Math.random()*256,
+                    g: Math.random()*256,
+                    b: Math.random()*256
+                },
+                score: 0
+            }
+            
+            let enemies = [];
+            let coins = [];
+
+            function spawnEnemy(){
+
+                let r1 = Math.random() * canvas.width;
+
+                let r2 = Math.random() * canvas.width;
+
+                enemies.push({
+                    x: r1,
+                    y: r2,
+                    vx: 1,
+                    vy: 1,
+                    size: Math.random()*100,
+                    color: {
+                        r: Math.random()*256,
+                        g: Math.random()*256,
+                        b: Math.random()*256
+                    }
+                });
+            }
+
+            function spawnCoin(){
+
+                let r1 = Math.random() * canvas.width;
+
+                let r2 = Math.random() * canvas.width;
+
+                coins.push({
+                    x: r1,
+                    y: r2,
+                    size: 50,
+                    width: 50,
+                    height: 50,
+                    color: "yellow"
+                });
+            }
+            function drawEnemy(e){
+
+                ctx.fillStyle = "red";
+                ctx.fillRect(e.x,e.y,100,100);
+
+            }
+
+            function moveEnemy(e){
+                e.x += e.vx*10;
+                e.y += e.vy*10;
+
+                if( canvas.width < e.x){
+                    e.vx *= -1;
+                }
+
+                if(e.x <= 0 ){
+
+                    e.vx *= -1;
+                }
+
+                if( canvas.height < e.y){
+                    e.vy *= -1;
+                }
+
+                if(e.y <=  0 ){
+
+                    e.vy *= -1;
+                }
+                
+            }
+
+            function moveMe(){
+
+                if(keyboard.a) me.x -= me.vx;
+                if(keyboard.d) me.x += me.vx;
+                if(keyboard.s) me.y += me.vy;
+                if(keyboard.w) me.y -= me.vy;
+
+                if( canvas.width - me.size < me.x){
+                    me.x = canvas.width - me.size;
+                }
+
+                if(me.x <= 0 ){
+
+                    me.x = 0;
+                }
+
+                if( canvas.height - me.size < me.y){
+                    me.y = canvas.height - me.size;
+                }
+
+                if(me.y <=  0 ){
+
+                    me.y = 0;
+                }
+            }
+
+            function drawMe(){
+                ctx.fillStyle = "blue";
+                ctx.fillRect(me.x,me.y,me.width,me.height);
+            }
+
+            function drawCoin(c){
+
+                ctx.fillStyle = c.color;
+                ctx.beginPath();
+                ctx.arc(c.x ,c.y, c.size/2, c.size/2, 0, Math.PI*2);
+                ctx.fill();
+                
+            }
+
+
+            function checkCollision(a, b){
+
+                return( Math.abs(a.x - b.x) <= (a.width/2 + b.width/2)) && (Math.abs(a.y - b.y) <= (a.height/2 + b.height/2));
+            }
+
+            function reset(){
+
+                me.x = Math.random() * canvas.width;
+                me.y = Math.random() * canvas.height;
+
+                while(enemies.length > 0) enemies.pop();
+                while(coins.length < 10){
+                    spawnCoin();
+                }
+            }
+            /*let enemies = [];
+
+            enemies.push({
+                x: 5, y: 6,
+                vx: 1, vy: 1
+            });
+
+            Math.random() * canvas.width;
+            enemies[i]
+            enemies.splice(i,1);
+
+            const enemy = enemies[i];
+            enemies.forEach(function(enemy){
+
+            });
+
+            function collision(obj1, obj2){
+                ...
+                return ...
+            }
+
+            (o1, o2) => { ...}
+            o1 => {}*/
+
+
+            function render(){
+
+                requestAnimationFrame(render);
+                ctx.fillStyle = "white";
+                ctx.fillRect(0,0    ,canvas.width, canvas.height);
+
+                if(keyboard.q){
+                    spawnEnemy();
+                }
+
+                /*if(keyboard.a) x -= speed;
+                if(keyboard.d) x+= speed;
+                if(keyboard.s) y += speed;
+                if(keyboard.w) y -= speed;
+                
+                if(isMouseDown)
+                    ctx.fillStyle = "red";
+                else
+                    ctx.fillStyle = "blue";*/
+                moveMe();
+                drawMe();
+                for(let i = 0; i < enemies.length; ++i){
+
+                    let enemy = enemies[i];
+                    moveEnemy(enemy);
+                    let col = checkCollision(enemy, me);
+                    if(col){
+                        alert("a");
+                        enemy.vx *=-1;
+                        enemy.vy *=-1;
+                        moveEnemy(enemy);
+                    }
+
+                    drawEnemy(enemy);
+
+
+                }
+
+                for(let i = 0; i < coins.length; ++i){
+
+                    let coin = coins[i];
+                    drawCoin(coin);
+                    let col = checkCollision(me, coin);
+                    if(col){
+                        coins.splice(i,1);
+                        me.score += 10;
+                    }
+
+
+                }
+
+
+                ctx.fillStyle = "black";
+                ctx.font = "Helvetica";
+                ctx.strokeText(`Score: ${me.score}`, 30, 30);
+                
+            }
+
+            for(let i = 0; i < 20; ++i){
+                spawnEnemy();
+            }
+
+            for(let i = 0; i < 10; ++i){
+                spawnCoin();
+            }
+
+            //setInterval(render, 16);
+            requestAnimationFrame(render);  
+
+            
+            const keyboard = {
+
+            };
+
+            document.addEventListener("keydown", function(){
+
+              
+                keyboard[event.key] = true;
+            });
+
+            document.addEventListener("keyup", function(){
+                keyboard[event.key] = false;
+            });
+
+        </script>
+    </body>
+</html>

@@ -1,0 +1,114 @@
+<html>
+    <head>
+        <style>
+            body{
+                margin: 0;
+                padding: 0;
+            }
+            canvas {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <!--h1>Titulo</h1>
+        <p>Hola</p-->
+
+        <script>
+            console.log("hello");
+
+            // const canvas = document.getElementById("myCanvas");
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            document.body.appendChild(canvas);
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            ctx.fillStyle = "lightblue";
+            ctx.fillRect(0,0, canvas.width, canvas.height);
+
+            // rect
+            ctx.fillStyle = "red";
+            ctx.fillRect(50,50,30,30);
+
+            // arc
+            ctx.fillStyle = "green"
+            ctx.beginPath();
+            ctx.arc(110,65, 15, 0, Math.PI*2);
+            ctx.fill();
+
+            ctx.strokeStyle = "darkgreen";
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            // triangle
+            ctx.fillStyle = "blue";
+            ctx.beginPath();
+            ctx.moveTo(140, 50);
+            ctx.lineTo(155,80);
+            ctx.lineTo(125,80);
+            ctx.fill();
+            ctx.closePath();
+            ctx.strokeStyle = "cyan";
+            ctx.stroke();
+
+            for(let i = 0; i < 10;++i){
+                ctx.fillStyle = `${i}033FF`
+                ctx.fillRect(50 +i*40, 150, 30, 30)
+            }
+
+            // while ...
+
+            // switch ...
+
+            let x = 110;
+            function render(){
+
+                renderClock();
+                requestAnimationFrame(render);
+
+                ctx.fillStyle = "lightyellow";
+                ctx.fillRect(0,200,canvas.width, 30);
+                
+                ctx.fillStyle = "yellow";
+                const now = Date.now() / 200;
+                ctx.fillRect(
+                    Math.sin(now)*canvas.width/2 + canvas.width/2,
+                    200,
+                    30,
+                    30);
+                ++x;
+
+            }
+
+            render();
+
+            //setInterval(render, 16);
+            requestAnimationFrame(render);
+
+            function renderClock(){
+
+                var x = 300;
+                var y = 300;
+                var angle = 360/12;
+                ctx.moveTo(x,y);
+                
+                for(let i = 1; i<= 12; ++i){
+
+                    ctx.moveTo(Math.cos()*150, Math.sin()*150);
+                }
+
+                /*ctx.fillStyle = "green"
+                ctx.beginPath();
+                ctx.arc(110,300, 15, 0, Math.PI*2);
+                ctx.fill();
+                ctx.strokeStyle = "darkgreen";
+                ctx.lineWidth = 5;
+                ctx.stroke();*/
+            }
+
+        </script>
+    </body>
+</html>
