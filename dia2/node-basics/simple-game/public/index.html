@@ -1,0 +1,186 @@
+<html>
+<head>
+    <style>
+        body, body {
+            padding: 0;
+            margin: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .ranking {
+            width: 200px;
+            height: 400px;
+            overflow: scroll;
+            background-color: black;
+            color: white;
+            top: 0;
+            right: 0;
+            position: absolute;
+            opacity: 0.4;
+        }
+
+        li {
+            list-style: none;
+        }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+<script>
+const canvas = document.createElement('canvas')
+const ctx = canvas.getContext('2d')
+document.body.appendChild(canvas)
+
+canvas.width = window.innerWidth
+canvas.height = window.innerHeight
+
+// append ranking
+
+const ranking = document.createElement("div");
+
+ranking.setAttribute("class", "ranking");
+
+const list = document.createElement("ul");
+list.innerHTML = "<li class='title'>Player Ranking</li>";
+ranking.appendChild( list );
+
+document.body.appendChild(ranking);
+
+ctx.fillStyle = 'lightblue'
+ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+let state
+let myPlayer
+
+function render () {
+    requestAnimationFrame(render)
+
+    const { players, enemies, coins } = state
+
+    // borrar pantalla
+    ctx.globalAlpha = 0.2
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.globalAlpha = 1
+
+    ctx.save()
+
+    // center camera on player
+    ctx.translate(
+        canvas.width/2 - myPlayer.x,
+        canvas.height/2 - myPlayer.y
+    )
+
+    // coin render
+    coins.forEach(coin => {
+        ctx.fillStyle = 'yellow'
+        ctx.save()
+        ctx.translate(coin.x, coin.y)
+        ctx.rotate((Date.now() / 200) % (Math.PI*2))
+        ctx.fillRect(-coin.size/2,
+                     -coin.size/2,
+                     coin.size,
+                     coin.size)
+        ctx.restore()
+    })
+
+    // enemy render
+    const sizeFactor = (1-(Date.now() / 500 % 1)) + 1
+    enemies.forEach(enemy => {
+        ctx.fillStyle = 'red'
+        const size = enemy.size * sizeFactor
+        ctx.fillRect(
+            enemy.x - size/2,
+            enemy.y - size/2,
+            size,
+            size
+        )
+    })
+
+    // player render
+    players.forEach(player => {
+        if(player.dead) return;
+        ctx.fillStyle = (player === myPlayer) ? 'blue' : 'green'
+        const size = 20
+        
+        ctx.fillRect(player.x - player.size/2,
+            player.y - player.size/2,
+            player.size,
+            player.size);
+
+            ctx.fillStyle = "black";
+            ctx.font = '12px Helvetica'
+        ctx.fillText(player.username, player.x - player.size , player.y - player.size);
+    });
+
+    // ranking render
+    renderRanking(state.players);
+
+    ctx.restore()
+
+    ctx.fillStyle = 'black'
+    ctx.font = '30px Helvetica'
+    ctx.fillText(`Score: ${myPlayer.score}`, 30, 40)
+}
+
+function renderRanking(players){
+
+    list.innerHTML = "<li class='title'>Player Ranking</li>";
+    players.forEach(player => {
+
+        let info = document.createElement("li");
+        info.innerHTML = player.username+": "+player.score;
+        list.appendChild(info);
+
+    })
+}
+
+requestAnimationFrame(render)
+
+const keyboard = {}
+
+const mapping = {
+    a: 'left',
+    d: 'right',
+    w: 'up',
+    s: 'down'
+}
+document.addEventListener('keydown', function (event) {
+    keyboard[mapping[event.key]] = true
+    socket.emit('input', keyboard)
+})
+document.addEventListener('keyup', function (event) {
+    keyboard[mapping[event.key]] = false
+    socket.emit('input', keyboard)
+})
+
+const socket = io()
+
+socket.emit("setUsername", prompt("what's your nick",""));
+
+socket.on('state', function (newState) {
+    state = newState
+    myPlayer = state.players.find(player => {
+        return (player.id === socket.id)
+    })
+});
+
+socket.on('playerDead', function(pId){
+
+    if(myPlayer.id === pId){
+        alert("You are dead!");
+    }
+});
+
+socket.on("playerDc", function(player){
+
+    console.log(`Player ${player.id} has disconnected`);
+});
+
+</script>
+</body>
+</html>
