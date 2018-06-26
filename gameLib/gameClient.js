@@ -1,10 +1,9 @@
-import { UIManager } from "./lib/uiManager";
-import { KeyBoard } from "./lib/keyboard";
-import { Mouse } from "./lib/mouse";
-import { Network } from "./lib/netManager";
+let UIManager = require("./lib/uiManager");
+let KeyBoard = require("./lib/keyboard");
+let Mouse = require("./lib/mouse");
+let Network = require("./lib/netManager");
 
-export class GameClient {
-
+class GameClient {
     constructor() {
 
         let canvas = document.createElement("canvas");
@@ -27,3 +26,5 @@ export class GameClient {
         
     }
 }
+
+module.exports = GameClient;

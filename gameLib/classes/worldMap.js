@@ -1,4 +1,4 @@
-import { WorldObject } from "./worldObject";
+let WorldObject = require("./worldObject");
 
 /**
  * A WorldMap is a subspace of a World that holds WorldObjects
@@ -6,7 +6,7 @@ import { WorldObject } from "./worldObject";
  * @export
  * @class WorldMap
  */
-export class WorldMap {
+class WorldMap {
 
     constructor(id, name, dimension) {
         this.id = id;
@@ -41,3 +41,5 @@ export class WorldMap {
         return this.objects;
     }
 }
+
+module.exports = WorldMap;

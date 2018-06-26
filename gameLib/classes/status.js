@@ -3,7 +3,7 @@
  *
  * @class Status
  */
-export class Status {
+class Status {
 
     static TYPES = {
         health: "health",
@@ -30,3 +30,5 @@ export class Status {
         
     }
 }
+
+module.exports = Status;

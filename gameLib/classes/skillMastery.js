@@ -1,5 +1,5 @@
-import { Skill } from "./skill"
-export class SkillMastery {
+let Skill = require("./skill");
+class SkillMastery {
 
     constructor(id, name){
 
@@ -31,3 +31,5 @@ export class SkillMastery {
         return this.skills[skillId];
     }
 }
+
+module.exports = SkillMastery;

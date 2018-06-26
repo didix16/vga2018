@@ -1,4 +1,4 @@
-export class Mouse {
+class Mouse {
 
     constructor(callbacks = {}){
 
@@ -49,3 +49,5 @@ Mouse.BUTTONS = {
     LEFT: 0,
     RIGHT:2
 }
+
+module.exports = Mouse;

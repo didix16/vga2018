@@ -1,4 +1,4 @@
-export class WorldObject {
+class WorldObject {
     /**
      *Creates an instance of WorldObject.
     * @memberof WorldObject
@@ -44,3 +44,5 @@ export class WorldObject {
         return this.name;
     }
 }
+
+module.exports = WorldObject;

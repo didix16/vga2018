@@ -1,4 +1,4 @@
-import { WorldObject } from "./worldObject"
+let WorldObject = require("./worldObject");
 
 /**
  * A unit is a class that represents an object in the world that has HP, level, speed , attack and defense attributes. Also can attack to other units and move
@@ -8,7 +8,7 @@ import { WorldObject } from "./worldObject"
  * @class Unit
  * @extends {WorldObject}
  */
-export class Unit extends WorldObject {
+class Unit extends WorldObject {
 
     constructor(x, y, name, id) {
         super(x, y, name, id);
@@ -209,3 +209,5 @@ export class Unit extends WorldObject {
 
     }
 }
+
+module.exports = Unit;
