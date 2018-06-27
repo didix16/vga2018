@@ -11,3 +11,74 @@ ping = (t1-t0)/2
 Si el fallo en TCP de paquetes se produce, se multiplica hasta x3 como mínimo
 
 chance npm -> plugin para generar cosas random
+
+
+
+Día 3
+------------------------------------
+
+Texture Packer -> generador de spritesheet a partir de imagenes
+
+
+http://kenney.nl -> web donde localizar spritesheets gratis
+
+Eximo.js -> mini librería de dasilva para dibujar spritesheets
+
+
+--
+
+client-side-prediction: acciones que tomo , asumo que serán válidas y las ejecuto en mi local para ver instantatiamente sin q parezca q haya un delay (el ir al server)
+
+Cuando se usa a secas tiene problemas con los imputs por ejemplo. Envio de inputs seguidos sin esperar el estado del server. Fallo de sincronía.
+
+Solución: guardar el estado local con el número de inputs y ver los states recibidos. Si he hecho más inputs q estados recibidos entonces uso mi estado local como predicción. Esto se llama: client-side prediction with server Reconciliation.
+
+
+
+Interpolación: para ver cosas que no importan en el pasado?
+
+Extrapolación o Dead-reckoning:
+
+Simulation with Rollback:
+
+Deterministic simulation with rollback: solo se envian los inputs. 
+
+Lockstep: se avanza en conjunto. se usan hashes
+
+agreed input delay:
+
+client side authority:
+
+
+uniform grids: (los map chuncks)
+
+Math.floor(pos.x/chunck.w) para saber en que chunck estoy. Si se cambia de casilla, mover en memoria de map chunck el objeto
+
+Ahorrar bandwidth:
+
+* Utilizar funciones deterministas para simular movimiento sin pedir al servidor nada. ( Deterministic props )
+
+* Server Dead reckoning ( no tiene pq ser el algoritmo de proyección )
+
+Hierarchical Replicaton:
+
+Shards: Virtualización de mundos con misma replica pero los jugadores no se ven entre ellos.
+
+
+Servidores frontera: cada uno controla unos grids. Los grids colindantes se piden al servidor que las controla para saber tb su estado.
+
+
+Agents:
+
+* Reactive:
+
+-- my health, my objets, etc..
+
+* Deliverative:
+
+-- tiene cosas sobre el mundo y realiza planes, se comunica. Ej: NPC que quiere una casa para construir, v aa buscar materiales. etc
+
+
+
+
+

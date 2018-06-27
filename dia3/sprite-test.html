@@ -1,0 +1,92 @@
+<html>
+<head>
+    <script src="./Eximo.js" ></script>
+    <!--script src="/socket.io/socket.io.js"></script-->
+    <style>
+        body, body {
+            padding: 0;
+            margin: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .ranking {
+            width: 200px;
+            height: 400px;
+            overflow: scroll;
+            background-color: black;
+            color: white;
+            top: 0;
+            right: 0;
+            position: absolute;
+            opacity: 0.4;
+        }
+
+        li {
+            list-style: none;
+        }
+    </style>
+</head>
+<body>
+<script>
+const canvas = document.createElement('canvas')
+const ctx = canvas.getContext('2d')
+document.body.appendChild(canvas)
+
+canvas.width = window.innerWidth
+canvas.height = window.innerHeight
+
+// append ranking
+
+const ranking = document.createElement("div");
+
+ranking.setAttribute("class", "ranking");
+
+const list = document.createElement("ul");
+list.innerHTML = "<li class='title'>Player Ranking</li>";
+ranking.appendChild( list );
+
+document.body.appendChild(ranking);
+
+ctx.fillStyle = 'lightblue'
+ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+let state
+let myPlayer
+
+function render () {
+    requestAnimationFrame(render)
+
+    // borrar pantalla
+    ctx.globalAlpha = 0.2
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.globalAlpha = 1
+
+    Eximo.drawSprite("tank_darkLarge.png", ctx, 50, 50);
+}
+
+Eximo.loadSpriteSheet('tanks.json', render);
+const keyboard = {}
+
+const mapping = {
+    a: 'left',
+    d: 'right',
+    w: 'up',
+    s: 'down'
+}
+document.addEventListener('keydown', function (event) {
+    keyboard[mapping[event.key]] = true
+    socket.emit('input', keyboard)
+})
+document.addEventListener('keyup', function (event) {
+    keyboard[mapping[event.key]] = false
+    socket.emit('input', keyboard)
+})
+
+</script>
+</body>
+</html>
