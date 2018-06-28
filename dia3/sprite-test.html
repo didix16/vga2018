@@ -1,5 +1,9 @@
 <html>
 <head>
+        <script
+        src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
     <script src="./Eximo.js" ></script>
     <!--script src="/socket.io/socket.io.js"></script-->
     <style>
@@ -66,10 +70,10 @@ function render () {
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.globalAlpha = 1
 
-    Eximo.drawSprite("tank_darkLarge.png", ctx, 50, 50);
+    Eximo.drawSprite("10.png", ctx, 50, 50);
 }
 
-Eximo.loadSpriteSheet('tanks.json', render);
+Eximo.loadSpriteSheet('./sprites/char/char.json', render);
 const keyboard = {}
 
 const mapping = {

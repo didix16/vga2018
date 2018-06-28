@@ -1,0 +1,514 @@
+<html>
+<head>
+        <script
+        src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+    <script src="./Eximo.js" ></script>
+    <!--script src="/socket.io/socket.io.js"></script-->
+    <style>
+        body, body {
+            padding: 0;
+            margin: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .ranking {
+            width: 200px;
+            height: 400px;
+            overflow: scroll;
+            background-color: black;
+            color: white;
+            top: 0;
+            right: 0;
+            position: absolute;
+            opacity: 0.4;
+        }
+
+        li {
+            list-style: none;
+        }
+    </style>
+</head>
+<body>
+<script>
+const canvas = document.createElement('canvas')
+const ctx = canvas.getContext('2d')
+document.body.appendChild(canvas)
+
+canvas.width = window.innerWidth
+canvas.height = window.innerHeight
+
+// append ranking
+
+const ranking = document.createElement("div");
+
+ranking.setAttribute("class", "ranking");
+
+const list = document.createElement("ul");
+list.innerHTML = "<li class='title'>Player Ranking</li>";
+ranking.appendChild( list );
+
+document.body.appendChild(ranking);
+
+ctx.fillStyle = 'lightblue'
+ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+let state = {
+
+    enemies: [],
+    players: [],
+    items: [],
+    proyectiles: []
+}
+
+
+
+function spawnEnemy(name, scale){
+
+    scale = scale || SCALE
+    state.enemies.push({
+
+        x: Math.random() * 1000 * Math.sin(Date.now()),
+        y: Math.random() * 1000 * Math.sin(Date.now()),
+        vx: 1,
+        vy: 1,
+        is: name,
+        currAnim: 0,
+        dir: 1,
+        radius: 100,
+        action: "move",
+        moveVector: {
+            mVx: 0,
+            mVy: 0
+        },
+        scale: scale,
+        target: {
+            x: null,
+            y: null
+        }
+    });
+}
+
+// mappings a dir to its corresponding angle
+const ANGLES = {
+
+    1: Math.PI*3/2,
+    2: Math.PI*5/4,
+    3: Math.PI,
+    4: Math.PI*3/4,
+    5: Math.PI/2,
+    6: Math.PI/4,
+    7: 0,
+    8: Math.PI*7/4
+
+};
+
+let myPlayer = {
+
+    id: 'dsfdfsdfg',
+    is: 'sqrt',
+    x: 50,
+    y: 50,
+    dir: 1,
+    anim: [0,1,2],
+    currAnim: 0,
+    vx: 2,
+    vy: 2
+}
+
+let SCALE = 2;
+
+const keyboard = {}
+
+let t0 = Date.now();
+function render () {
+    requestAnimationFrame(render)
+
+    let now = Date.now();
+    let delta = now - t0;
+    let change = Math.floor(Date.now()/120)%2;
+
+    // borrar pantalla
+    ctx.globalAlpha = 1
+    ctx.fillStyle = 'green'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.globalAlpha = 1
+
+    ctx.save();
+
+    // center camera on player
+    ctx.translate(
+        canvas.width/2 - myPlayer.x,
+        canvas.height/2 - myPlayer.y
+    )
+
+    renderUnit(myPlayer, change);
+
+    state.proyectiles.forEach( function(proyectile){
+
+        proyectileLogic(proyectile);
+        renderProyectile(proyectile);
+    });
+
+    state.enemies.forEach(function( enemy ){
+
+        logicUnit(enemy);
+        renderEnemy(enemy, change);
+    });
+
+    // render coordinates lines
+    renderCoordinateLines();
+
+    ctx.restore();
+
+    ctx.fillStyle = "black";
+    ctx.fillText("FPS: "+Math.floor(1000/delta), 20,20);
+    ctx.fillText("POS: ("+myPlayer.x+", "+myPlayer.y+")", 20,50);
+}
+
+function renderCoordinateLines(){
+
+    ctx.beginPath()
+    ctx.moveTo(0,-2000);
+    ctx.lineTo(0,2000);
+    ctx.stroke();
+    ctx.closePath();
+
+    ctx.beginPath()
+    ctx.moveTo(-2000, 0);
+    ctx.lineTo(2000, 0);
+    ctx.stroke();
+    ctx.closePath();
+
+    for(let i = -2000; i < 2000; i += 100){
+
+        
+    }
+}
+
+function addProyectile(props){
+
+    state.proyectiles.push({
+        x: props.x,
+        y: props.y,
+        vx: props.vx,
+        vy: props.vy,
+        dmg: props.dmg,
+        owner: props.owner,
+        collide: false,
+        dist: 0,
+        maxDistance: props.maxDistance,
+        is: props.is
+    });
+
+    return state.proyectiles.length-1;
+}
+
+function renderProyectile(proyectile){
+
+    ctx.save();
+    ctx.translate(proyectile.x,proyectile.y);
+    ctx.scale(1, 1);
+
+    Eximo.drawSprite(proyectile.is+".png", ctx, -12, -12);
+
+    ctx.restore();
+}
+
+function proyectileLogic(proyectile){
+
+    // check collision
+
+    // advance proyectile
+    proyectile.x += proyectile.vx;
+    proyectile.y += proyectile.vy;
+    proyectile.dist++;
+
+    // collide if dist >= maxDistance or collides with other objects
+    if(proyectile.dist >= proyectile.maxDistance){
+        proyectile.collide = true;
+        let i = state.proyectiles.findIndex(function(p){
+            p === proyectile
+        });
+
+        // remove proyectile
+        state.proyectiles.splice(i,1);
+    }
+}
+
+function logicUnit(unit){
+
+    if(unit.target.x === null){
+
+        let alfa = Math.PI * 2 * Math.random();
+        //let beta = Math.PI * 2 * Math.random()
+
+        let x = unit.x + Math.cos(alfa) * unit.radius;
+        let y = unit.y - Math.sin(alfa) * unit.radius;
+
+        unit.target.x = x;
+        unit.target.y = y;
+
+        let vector = {
+            x: unit.target.x - unit.x,
+            y: unit.target.y - unit.y
+        };
+
+        let magnitude = Math.sqrt( Math.pow(vector.x,2) + Math.pow(vector.y,2) );
+
+        unit.vx = vector.x/magnitude;
+        unit.vy = vector.y/magnitude;
+
+        // try dummy attack here
+        addProyectile({
+            x: unit.x,
+            y: unit.y,
+            vx: Math.cos(alfa) * 3,
+            vy: -Math.sin(alfa) * 3,
+            owner: 'sdsd',
+            dmg: 10,
+            is: 'effectssting',
+            maxDistance: 100
+
+        });
+
+    }else{
+
+        let dist = Math.sqrt( Math.pow(unit.target.x - unit.x ,2) + Math.pow(unit.target.y - unit.y,2) )
+        if(dist <=2){
+            unit.x = unit.target.x;
+            unit.y = unit.target.y;
+
+            unit.target.x = null;
+            unit.target.y = null;
+        }else{
+            unit.x += unit.vx;
+            unit.y += unit.vy;
+        }
+
+    }
+}
+
+function renderEnemy(unit, change){
+    
+    ctx.save();
+    ctx.translate(unit.x,unit.y);
+    ctx.scale(unit.scale, unit.scale);
+    
+    // logic of sprite animation by movement
+
+    let vec = {
+        x: unit.vx,
+        y: unit.vy
+    };
+
+    if(vec.y > 0){
+
+        if(vec.x < 0){
+            unit.dir = 2;
+        }else if(vec.x > 0){
+            unit.dir = 8;
+        }else{
+            unit.dir = 1;
+            
+        }
+
+        if(change) unit.currAnim = (unit.currAnim+1)%3;
+        if(unit.currAnim == 0) ++unit.currAnim;
+
+    }else if(vec.x < 0){
+
+        if(vec.y > 0){
+            unit.dir = 2;
+        }else if(vec.y < 0){
+            unit.dir = 4;
+        }else{
+            unit.dir = 3;
+        }
+        if(change) unit.currAnim = (unit.currAnim+1)%3;
+        if(unit.currAnim == 0) ++unit.currAnim;
+
+    }else if(vec.y < 0){
+
+        if(vec.x < 0){
+            unit.dir = 4;
+        }else if(vec.x > 0){
+            unit.dir = 6;
+        }else{
+            unit.dir = 5;
+        }
+        if(change) unit.currAnim = (unit.currAnim+1)%3;
+        if(unit.currAnim == 0) ++unit.currAnim;
+
+    }else if(vec.x > 0){
+
+        if(vec.y > 0){
+            unit.dir = 8;
+        }else if(vec.y < 0){
+            unit.dir = 6;
+        }else{
+            unit.dir = 7;
+        }
+        if(change) unit.currAnim = (unit.currAnim+1)%3;
+        if(unit.currAnim == 0) ++unit.currAnim;
+
+    }else{
+        unit.currAnim = 0;
+    }
+
+    if(unit === state.enemies[0]){
+        console.log(unit.is+unit.dir+""+unit.currAnim+".png");
+    }
+
+    Eximo.drawSprite(unit.is+unit.dir+""+(1+change)+".png", ctx, -12, -12);
+    
+    ctx.restore();
+}
+
+function renderUnit(unit, change){
+
+    ctx.save();
+    ctx.translate(unit.x,unit.y);
+    ctx.scale(SCALE, SCALE);
+    
+    // logic of sprite animation by movement
+    if(keyboard.down){
+
+        unit.y += unit.vy;
+
+        if(keyboard.left){
+            unit.dir = 2;
+            unit.x -= unit.vx;
+        }else if(keyboard.right){
+            unit.dir = 8;
+            unit.x += unit.vx;
+        }else{
+            unit.dir = 1;
+            
+        }
+
+        if(change)
+        unit.currAnim = (unit.currAnim+1)%3;
+        if(unit.currAnim == 0) ++unit.currAnim;
+
+    }else if(keyboard.left){
+
+        unit.x -= unit.vx;
+
+        if(keyboard.down){
+            unit.dir = 2;
+            unit.y += unit.vy;
+        }else if(keyboard.up){
+            unit.dir = 4;
+            unit.y -= unit.vy;
+        }else{
+            unit.dir = 3;
+        }
+        if(change)
+        unit.currAnim = (unit.currAnim+1)%3;
+        if(unit.currAnim == 0) ++unit.currAnim;
+
+    }else if(keyboard.up){
+
+        unit.y -= unit.vy;
+
+        if(keyboard.left){
+            unit.dir = 4;
+            unit.x -= unit.vx;
+        }else if(keyboard.right){
+            unit.dir = 6;
+            unit.x += unit.vx;
+        }else{
+            unit.dir = 5;
+        }
+        if(change)
+        unit.currAnim = (unit.currAnim+1)%3;
+        if(unit.currAnim == 0) ++unit.currAnim;
+
+    }else if(keyboard.right){
+
+        unit.x += unit.vx;
+
+        if(keyboard.down){
+            unit.dir = 8;
+            unit.y += unit.vy;
+        }else if(keyboard.up){
+            unit.dir = 6;
+            unit.y -= unit.vy;
+        }else{
+            unit.dir = 7;
+        }
+        if(change)
+        unit.currAnim = (unit.currAnim+1)%3;
+        if(unit.currAnim == 0) ++unit.currAnim;
+
+    }else{
+        unit.currAnim = 0;
+    }
+
+    if(keyboard.space){
+
+        keyboard.space = false;
+        let pType = "effects";
+        switch(myPlayer.is){
+            case "bulb":
+                pType += "raz_leaf";
+                break;
+            case "char":
+                pType += "fire";
+                break;
+            case "sqrt":
+                pType += "bub";
+                break;
+        }
+
+        addProyectile({
+            x: unit.x,
+            y: unit.y,
+            vx: Math.cos(ANGLES[unit.dir]) * 3,
+            vy: -Math.sin(ANGLES[unit.dir]) * 3,
+            owner: myPlayer.id,
+            dmg: 10,
+            is: pType,
+            maxDistance: 100
+
+        });
+    }
+
+    Eximo.drawSprite(unit.is+unit.dir+""+( unit.currAnim === 0 ? 0 : 1+change)+".png", ctx, -12, -12);
+    
+    ctx.restore();
+}
+
+Eximo.loadSpriteSheet('./sprites/char/char.json', './sprites/char/', render);
+Eximo.loadSpriteSheet('./sprites/bulb/bulb.json', './sprites/bulb/');
+Eximo.loadSpriteSheet('./sprites/sqrt/sqrt.json', './sprites/sqrt/');
+Eximo.loadSpriteSheet('./sprites/artic/artic.json', './sprites/artic/');
+Eximo.loadSpriteSheet('./sprites/ekans/ekans.json', './sprites/ekans/');
+Eximo.loadSpriteSheet('./sprites/cubone/cubone.json', './sprites/cubone/');
+Eximo.loadSpriteSheet('./sprites/effects/effects.json', './sprites/effects/');
+
+const mapping = {
+    a: 'left',
+    d: 'right',
+    w: 'up',
+    s: 'down',
+    " ": 'space'
+}
+document.addEventListener('keydown', function (event) {
+    keyboard[mapping[event.key]] = true
+    //socket.emit('input', keyboard)
+})
+document.addEventListener('keyup', function (event) {
+    keyboard[mapping[event.key]] = false
+    //socket.emit('input', keyboard)
+})
+
+</script>
+</body>
+</html>
