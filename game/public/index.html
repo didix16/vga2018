@@ -15,6 +15,95 @@
         canvas {
             width: 100%;
             height: 100%;
+            z-index: -1;
+        }
+
+        div.alert {
+            font-family: "Arial";
+            background-color: darkblue;
+            padding: 10px;
+            color: white;
+            display: none;
+            position: absolute;
+            font-size: 24px;
+            top: 40%;
+            left: 50%;
+            -webkit-transform: translate(-50%, -60%);
+            transform: translate(-50%, -60%);
+        }
+        div.alert.show {
+            display: inline-block !important;
+        }
+        div.event-box {
+            position: absolute;
+            width: 20%;
+            height: 45%;
+            overflow-y: scroll;
+            background: hsla(0, 0%, 0%, 0.3);
+            top: 55%;
+            left: 80%;
+            transform: translate(0%, 0);
+            color: white;
+            text-shadow: 1px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+            font-family: "Arial";
+            font-size: 12px;
+            
+        }
+        div.event-box::-webkit-scrollbar
+        {
+            width: 0px;
+        }
+        div.event-box::-webkit-scrollbar-track-piece
+        {
+            background-color: transparent;
+            -webkit-border-radius: 6px;
+            border-radius: 6px;
+        }
+        div.event-box .content{
+            padding-left: 5px;
+            padding-top: 5px;
+            padding-right: 5px;
+            white-space: pre;
+        }
+        div.leaderbox {
+            position: absolute;
+            width: 20%;
+            height: 45%;
+            overflow-y: scroll;
+            background: hsla(0, 0%, 0%, 0.3);
+            top: 0%;
+            left: 80%;
+            transform: translate(0%, 0);
+            color: white;
+            text-shadow: 1px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+            font-family: "Arial";
+            font-size: 12px;
+            
+        }
+        div.leaderbox::-webkit-scrollbar
+        {
+            width: 0px;
+        }
+        div.leaderbox::-webkit-scrollbar-track-piece
+        {
+            background-color: transparent;
+            -webkit-border-radius: 6px;
+            border-radius: 6px;
+        }
+        div.leaderbox .content{
+            padding-left: 5px;
+            padding-top: 5px;
+            padding-right: 5px;
+            white-space: pre;
+        }
+        div.leaderbox .header {
+            border-bottom: 1px solid;
+        }
+        div.leaderbox .title {
+            width: 70px;
+            margin: 0 auto;
+            font-size: 18px;
+            
         }
 
         .ranking {
@@ -33,48 +122,138 @@
             list-style: none;
         }
     </style>
+    <link rel="stylesheet" href="./css/animate.css" type="text/css">
+    <link href="./css/font-awesome.min.css" rel="stylesheet" type="text/css" >
 </head>
 <body>
+        <div class="alert"></div>
+        <div class="leaderbox">
+            <div class="header">
+                <div class="title"> LeaderBoard </div>
+            </div>
+            
+            <div class="content"></div>
+        </div>
+        <div class="event-box">
+            <div class="content"></div>
+        </div>
 <script>
-const canvas = document.createElement('canvas')
+const canvas = document.createElement('canvas');
+canvas.setAttribute('style', 'font-family:fontawesome;position:absolute');
 const ctx = canvas.getContext('2d')
 document.body.appendChild(canvas)
 
 canvas.width = window.innerWidth
 canvas.height = window.innerHeight
 
-// append ranking
 
-const ranking = document.createElement("div");
+// ranking and event box
+const eventHistory = document.querySelector('div.event-box .content')
+const leaderBoard = document.querySelector('div.leaderbox .content')
 
-ranking.setAttribute("class", "ranking");
 
-const list = document.createElement("ul");
-list.innerHTML = "<li class='title'>Player Ranking</li>";
-ranking.appendChild( list );
-
-document.body.appendChild(ranking);
 
 ctx.fillStyle = 'lightblue'
 ctx.fillRect(0, 0, canvas.width, canvas.height)
 
 let state = {
 
+    // the object that holds teh entities will be in chuncks
     enemies: [],
     players: [],
     items: [],
-    proyectiles: []
+    proyectiles: [],
+
+    // matrix of chuncks, each chunck hold the enemies, players, items and proyectiles
+    map: []
 }
 
+function initMap(){
 
+    let chuncks = WORLD_SIZE/CHUNK_SIZE;
+
+    for(let i = 0; i < chuncks; ++i){
+
+        let arr = [];
+        for(let j = 0; j < chuncks; ++j){
+
+            arr.push([]);
+        }
+        state.map.push(arr);
+    }
+}
+
+// given a wolrd x and y, gets the map chunk matrix indexes
+function getChukIndex(x,y){
+
+    // LIMITE: por ahora limitar los chunks a posiciones positivas
+    if (x < 0) x = 0;
+    if( y < 0) y = 0;
+
+    if(x >= WORLD_SIZE / 2) x = WORLD_SIZE / 2;
+    if(y >= WORLD_SIZE / 2) y = WORLD_SIZE / 2;
+
+
+    return {
+        x: Math.floor(x / CHUNK_SIZE),
+        y: Math.floor(y / CHUNK_SIZE)
+    };
+
+
+}
+
+function getObjKeyByEntity(entity){
+
+    switch(entity){
+        case 'player': return 'players';
+        case 'item': return 'items';
+        case 'enemy': return 'enemies';
+        case 'proyectile': return 'proyectiles';
+        default: return '';
+    }
+}
+
+function addObjToChunk(chunkIdxes, obj){
+
+    state.map[chunkIdxes.x][chunkIdxes.y].push(obj);
+}
+
+function initSpawner(){
+
+    setInterval(function(){
+        let mob = Math.floor(Math.random() * 2);
+        if(mob){
+            mob = "ekans";
+        }else{
+            mob = "cubone";
+        }
+        spawnEnemy(mob,2);
+    }, 5000);
+}
 
 function spawnEnemy(name, scale){
 
-    scale = scale || SCALE
-    state.enemies.push({
+    scale = scale || SCALE;
+
+    let pos = {
 
         x: Math.random() * 1000 * Math.sin(Date.now()),
-        y: Math.random() * 1000 * Math.sin(Date.now()),
+        y: Math.random() * 1000 * Math.sin(Date.now())
+    };
+
+    let chunkIdx = getChukIndex(pos.x, pos.y);
+    let enemy = {
+
+        hp: 35,
+        maxHp: 35,
+        width: 28,
+        height: 28,
+        atk: 6,
+        def: 8,
+        speed: 1,
+        level: 5,
+        x: pos.x,
+        y: pos.y,
         vx: 1,
         vy: 1,
         is: name,
@@ -82,16 +261,21 @@ function spawnEnemy(name, scale){
         dir: 1,
         radius: 100,
         action: "move",
-        moveVector: {
-            mVx: 0,
-            mVy: 0
+        type: 'enemy',
+        currChunk: {
+            x: chunkIdx.x,
+            y: chunkIdx.y,
         },
         scale: scale,
         target: {
             x: null,
             y: null
         }
-    });
+    };
+    addObjToChunk(chunkIdx, enemy);
+
+
+    addEventHistory(`An <img src="./sprites/${name}/icon.png"> has spawned!`);
 }
 
 // mappings a dir to its corresponding angle
@@ -111,21 +295,100 @@ const ANGLES = {
 let myPlayer = {
 
     id: 'dsfdfsdfg',
-    is: 'sqrt',
+    is: 'char',
+    type: 'player',
     x: 50,
     y: 50,
     dir: 1,
     anim: [0,1,2],
     currAnim: 0,
     vx: 2,
-    vy: 2
+    vy: 2,
+    hp: 20,
+    maxHp: 20,
+    atk: 10,
+    def: 5,
+    speed: 2,
+    level: 5,
+    width: 24,
+    height: 24
 }
 
 let SCALE = 2;
+let CHUNK_SIZE = 200;
+let WORLD_SIZE = 8000;
 
 const keyboard = {}
 
 let t0 = Date.now();
+
+
+function renderAllObjects(change){
+
+    // lOGIC OF ALL OBJECTS
+
+    for(let i = 0; i < state.map.length; ++i){
+
+        for(let j = 0; j < state.map[i].length; ++j){
+
+            let cell = state.map[i][j];
+
+            for(let k = cell.length-1; k >= 0; --k){
+
+                let obj = cell[k];
+                switch(obj.type){
+                    case 'player':
+                        break;
+                    case 'enemy':
+                        logicUnit(obj);
+                        break;
+                    case 'item':
+                        break;
+                    case 'proyectile':
+                        proyectileLogic(obj,k );
+                        break;
+                }
+                
+            }
+            
+        }
+        
+    }
+
+    // RENDER OF ALL OBJECTS
+
+    for(let i = 0; i < state.map.length; ++i){
+
+        for(let j = 0; j < state.map[i].length; ++j){
+
+            let cell = state.map[i][j];
+
+            for(let k = cell.length-1; k >= 0; --k){
+
+                let obj = cell[k];
+                switch(obj.type){
+                    case 'player':
+                        break;
+                    case 'enemy':
+                        renderEnemy(obj, change);
+                        break;
+                    case 'item':
+                        break;
+                    case 'proyectile':
+                        renderProyectile(obj);
+                        break;
+                }
+                
+            }
+            
+        }
+        
+    }
+
+}
+
+
+
 function render () {
     requestAnimationFrame(render)
 
@@ -139,6 +402,17 @@ function render () {
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.globalAlpha = 1
 
+    // render position
+    ctx.font = "12px FontAwesome";
+    ctx.strokeText('\uf041', 15,20);
+    ctx.strokeStyle = "black";
+    ctx.font = '12px arial';
+    ctx.strokeText("Pos: ("+parseInt(myPlayer.x)+","+parseInt(myPlayer.y)+")",30,20);
+    ctx.fillStyle = "white";
+    ctx.fillText("Pos: ("+parseInt(myPlayer.x)+","+parseInt(myPlayer.y)+")",30,20);
+    ctx.font = "12px FontAwesome";
+    ctx.fillText('\uf041', 15,20);
+
     ctx.save();
 
     // center camera on player
@@ -147,28 +421,97 @@ function render () {
         canvas.height/2 - myPlayer.y
     )
 
+    // render objects
+    renderAllObjects(change);
+
     renderUnit(myPlayer, change);
 
-    state.proyectiles.forEach( function(proyectile){
+    /*
 
-        proyectileLogic(proyectile);
+    for(let i = state.proyectiles.length-1; i >= 0 ; --i){
+
+        let proyectile = state.proyectiles[i];
+        proyectileLogic(proyectile,i );
         renderProyectile(proyectile);
-    });
+    }
 
     state.enemies.forEach(function( enemy ){
 
         logicUnit(enemy);
         renderEnemy(enemy, change);
-    });
+    });*/
 
     // render coordinates lines
     renderCoordinateLines();
 
     ctx.restore();
+}
 
-    ctx.fillStyle = "black";
-    ctx.fillText("FPS: "+Math.floor(1000/delta), 20,20);
-    ctx.fillText("POS: ("+myPlayer.x+", "+myPlayer.y+")", 20,50);
+function forEachPair(callback){
+
+    for(let i = 0; i < state.map.length; ++i){
+
+        for(let j = 0; j < state.map[i].length; ++j){
+
+            // A cell contains an array list that holds the objects
+            let cell = state.map[i][j];
+
+            // foreach object in the cell
+            for(let k = 0; k < cell.length; ++k){
+
+                for(let l = k+1; l < cell.length; ++l){
+
+                    callback(cell[k], cell[l]);
+                }
+                
+            }
+
+            // foreach object of current cell and an object of adjacent cell
+            let adjacentCells = [];
+            // right
+            if(j+1 < state.map[i].length)
+                 adjacentCells.push(state.map[i][j+1]);
+
+            // right down
+            if(i+1 < state.map.length && j+i < state.map[i].length)
+                adjacentCells.push(state.map[i+1][j+1]);
+
+            // down
+            if(i+1 < state.map.length)
+                adjacentCells.push(state.map[i+1][j]);
+
+            // down left
+            if(i+1 < state.map.length && j-1 >= 0)
+                adjacentCells.push(state.map[i+1][j-1]);
+
+            for(let a = 0; a < adjacentCells.length; ++a){
+
+                let adjacentCell = adjacentCells[a];
+
+                for(let k = 0; k < cell.length; ++k){
+
+                    for(let l = 0; l < adjacentCell.length; ++l){
+
+                        callback(cell[k], adjacentCell[l]);
+                    }
+                    
+                }
+            }
+        }
+    }
+}
+
+// moves an obj from oldChunkIdx.x,oldChunkIdx.y TO newChunkIdx.x,newChunkIdx.y
+function moveObjBetweenChunks(obj, oldChunkIdx, newChunkIdx){
+
+    let oldCell = state.map[oldChunkIdx.x][oldChunkIdx.y];
+    let i = oldCell.find(function(o){
+
+        return o === obj;
+    });
+
+    oldCell.splice(i,1);
+    state.map[newChunkIdx.x][newChunkIdx.y].push(obj);
 }
 
 function renderCoordinateLines(){
@@ -193,7 +536,10 @@ function renderCoordinateLines(){
 
 function addProyectile(props){
 
-    state.proyectiles.push({
+    let chunkIdx = getChukIndex(props.x, props.y);
+
+    let proyectile = {
+        type: 'proyectile',
         x: props.x,
         y: props.y,
         vx: props.vx,
@@ -204,9 +550,10 @@ function addProyectile(props){
         dist: 0,
         maxDistance: props.maxDistance,
         is: props.is
-    });
+    };
 
-    return state.proyectiles.length-1;
+    addObjToChunk(chunkIdx, proyectile);
+
 }
 
 function renderProyectile(proyectile){
@@ -220,7 +567,7 @@ function renderProyectile(proyectile){
     ctx.restore();
 }
 
-function proyectileLogic(proyectile){
+function proyectileLogic(proyectile, i){
 
     // check collision
 
@@ -231,14 +578,15 @@ function proyectileLogic(proyectile){
 
     // collide if dist >= maxDistance or collides with other objects
     if(proyectile.dist >= proyectile.maxDistance){
-        proyectile.collide = true;
-        let i = state.proyectiles.findIndex(function(p){
-            p === proyectile
-        });
-
+        //proyectile.collide = true;
         // remove proyectile
         state.proyectiles.splice(i,1);
+        return true;
+    }else{
+        return false;
     }
+
+    
 }
 
 function logicUnit(unit){
@@ -267,6 +615,7 @@ function logicUnit(unit){
         // try dummy attack here
         addProyectile({
             x: unit.x,
+            type: 'proyectile',
             y: unit.y,
             vx: Math.cos(alfa) * 3,
             vy: -Math.sin(alfa) * 3,
@@ -281,14 +630,17 @@ function logicUnit(unit){
 
         let dist = Math.sqrt( Math.pow(unit.target.x - unit.x ,2) + Math.pow(unit.target.y - unit.y,2) )
         if(dist <=2){
+
             unit.x = unit.target.x;
             unit.y = unit.target.y;
 
             unit.target.x = null;
             unit.target.y = null;
         }else{
+
             unit.x += unit.vx;
             unit.y += unit.vy;
+
         }
 
     }
@@ -296,6 +648,31 @@ function logicUnit(unit){
 
 function renderEnemy(unit, change){
     
+
+    // draw health bar and level
+    let maxHealthBarX = 40;
+    let healthBarW = 5;
+
+    let POS_W = (-maxHealthBarX+2)/2;
+    ctx.save();
+    ctx.translate(POS_W,0);
+
+    ctx.strokeStyle = "black";
+    ctx.strokeText(`Lv: ${unit.level}`, unit.x - 40, unit.y - unit.height-20);
+    ctx.fillStyle = "white";
+    ctx.fillText(`Lv: ${unit.level}`, unit.x - 40, unit.y - unit.height-20);
+
+    ctx.fillStyle = 'black'
+    ctx.fillRect(unit.x - unit.width/2 + 4, unit.y - unit.height-20, maxHealthBarX, healthBarW + 1);
+
+    ctx.fillStyle = 'red';
+
+    let width = (unit.hp/unit.maxHp)*maxHealthBarX - 3
+    ctx.fillRect(unit.x - unit.width/2 + 6, unit.y - unit.height-19, width, healthBarW-1);
+
+    ctx.restore();
+
+
     ctx.save();
     ctx.translate(unit.x,unit.y);
     ctx.scale(unit.scale, unit.scale);
@@ -361,9 +738,9 @@ function renderEnemy(unit, change){
         unit.currAnim = 0;
     }
 
-    if(unit === state.enemies[0]){
+    /*if(unit === state.enemies[0]){
         console.log(unit.is+unit.dir+""+unit.currAnim+".png");
-    }
+    }*/
 
     Eximo.drawSprite(unit.is+unit.dir+""+(1+change)+".png", ctx, -12, -12);
     
@@ -371,6 +748,24 @@ function renderEnemy(unit, change){
 }
 
 function renderUnit(unit, change){
+    
+
+    // draw health bar
+    let maxHealthBarX = 40;
+    let healthBarW = 5;
+
+    let POS_W = (-maxHealthBarX+2)/2;
+    ctx.save();
+    ctx.translate(POS_W,0);
+    ctx.fillStyle = 'black'
+    ctx.fillRect(unit.x - unit.width/2 + 4, unit.y - unit.height-20, maxHealthBarX, healthBarW + 1);
+
+    ctx.fillStyle = 'red';
+
+    let width = (unit.hp/unit.maxHp)*maxHealthBarX - 3
+    ctx.fillRect(unit.x - unit.width/2 + 6, unit.y - unit.height-19, width, healthBarW-1);
+
+    ctx.restore();
 
     ctx.save();
     ctx.translate(unit.x,unit.y);
@@ -483,7 +878,61 @@ function renderUnit(unit, change){
     Eximo.drawSprite(unit.is+unit.dir+""+( unit.currAnim === 0 ? 0 : 1+change)+".png", ctx, -12, -12);
     
     ctx.restore();
+
+    
 }
+
+function showAlert(message){
+    let alert = $("div.alert");
+    alert.text(message);
+    alert.addClass("show")
+    setTimeout(() => {
+      alert.addClass("animated fadeOut");
+    },3000);
+    alert.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function(){
+
+      alert.text("").removeClass("show fadeOut");
+    });
+
+    return this;
+  }
+
+function addEventHistory(text){
+
+    let d = new Date();
+
+    let h = d.getHours();
+    let m = d.getMinutes();
+    let s = d.getSeconds();
+    h = h < 10 ? "0"+h : h;
+    m = m < 10 ? "0"+m : m;
+    s = s < 10 ? "0"+s : s;
+    let dString = h+":"+m+":"+s
+    eventHistory.innerHTML += `[ ${dString} ]  `+text+"\n";
+    $(".event-box").animate({ scrollTop: $(document).height() }, "slow");
+
+    return this;
+  }
+
+function updateRanking(){
+
+
+    state.players.sort(function(a,b){
+
+      if(a.score > b.score) return -1
+      else if(a.score < b.score) return 1
+      else return 0
+    });
+    
+    leaderBoard.innerHTML = "";
+
+    state.players.forEach( (p,i) => {
+
+        leaderBoard.innerHTML += `${i+1}. ${p.nickname} - ${p.score}<br>`
+
+    });
+    
+  }
 
 Eximo.loadSpriteSheet('./sprites/char/char.json', './sprites/char/', render);
 Eximo.loadSpriteSheet('./sprites/bulb/bulb.json', './sprites/bulb/');
@@ -492,6 +941,9 @@ Eximo.loadSpriteSheet('./sprites/artic/artic.json', './sprites/artic/');
 Eximo.loadSpriteSheet('./sprites/ekans/ekans.json', './sprites/ekans/');
 Eximo.loadSpriteSheet('./sprites/cubone/cubone.json', './sprites/cubone/');
 Eximo.loadSpriteSheet('./sprites/effects/effects.json', './sprites/effects/');
+
+initMap();
+initSpawner();
 
 const mapping = {
     a: 'left',

@@ -20,8 +20,8 @@ const state = {
   ranking: []
 }
 
-const WORLD_WIDTH = 500
-const WORLD_HEIGHT = 500
+const WORLD_WIDTH = 8000
+const WORLD_HEIGHT = 8000
 
 function reset () {
   const { players, enemies, coins } = state
@@ -52,7 +52,7 @@ function reset () {
     })
   }
 }
-reset()
+//reset()
 
 function collision (obj1, obj2) {
   const sizeSum = (obj1.size / 2 + obj2.size / 2)
