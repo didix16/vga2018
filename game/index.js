@@ -18,10 +18,10 @@ const state = {
   enemies: [],
   coins: [],
   ranking: []
-}
+};
 
-const WORLD_WIDTH = 500
-const WORLD_HEIGHT = 500
+const WORLD_WIDTH = 8000
+const WORLD_HEIGHT = 8000
 
 function reset () {
   const { players, enemies, coins } = state
@@ -117,9 +117,11 @@ function logic () {
 
   io.sockets.emit('state', state)
 }
+
 logic()
 
 io.on('connection', socket => {
+  
   const player = {
     x: 0,
     y: 0,
@@ -127,18 +129,19 @@ io.on('connection', socket => {
     score: 0,
     keyboard: {},
     id: socket.id,
-    username: ''
+    nickname: ''
   }
 
   state.players.push(player);
 
-  socket.on('setUsername', function (username) {
-      player.username = username;
+  socket.on('setData', function (data) {
+      player.nickname = data.nickname;
+      player.is = data.poke;
   });
 
   socket.on('input', function (keyboard) {
     if( player.dead) return;
-    player.keyboard = keyboard
+    player.keyboard = keyboard;
   })
 
   socket.on("disconnect", function () {
