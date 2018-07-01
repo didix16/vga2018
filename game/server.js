@@ -31,6 +31,7 @@ let gameServer = {
         "disconnect" : function () {
             
             let socket = this;
+            let state = gameServer.state;
             for(let i = state.players.length-1; i >= 0; --i){
                 
                 let p = state.players[i];
@@ -99,17 +100,27 @@ let gameServer = {
             type: 'player'
         };
     
-        scoket.player = player;
+        socket.player = player;
     },
 
     logic: function () { 
 
-        setTimeout(this.logic, this.interval);
+        setTimeout(this.logic.bind(this), this.interval);
     },
+
+    spawnMob: function (type, lvl, scale) {  },
+
+    spawnBoss: function (lvl, scale) {  },
+
+    spawnItem: function (type) {  },
+
+    // needed?
+    spawnProyectile: function () {  },
 
     init: function(options){
 
-        this.interval = options.interval;
+        options = options || {};
+        this.interval = options.interval || 20;
 
         // On user connected
         io.on('connection', socket => {
@@ -119,13 +130,16 @@ let gameServer = {
 
             this.state.players.push(socket.player);
 
-            for(let e in netEvents){
+            for(let e in this.netEvents){
 
                 socket.on(e, this.netEvents[e].bind(socket));
             }
 
         });
+
+        this.logic();
     }
 
 };
 
+gameServer.init();
